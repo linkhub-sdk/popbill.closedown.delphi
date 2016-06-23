@@ -18,6 +18,13 @@ uses
         TypInfo,SysUtils,Classes,
         Popbill, Linkhub;
 type
+        TClosedownChargeInfo = class
+        public
+                unitCost : string;
+                chargeMethod : string;
+                rateSystem : string;
+        end;
+        
         TCorpState = class
         public
                 corpNum : string;
@@ -38,6 +45,7 @@ type
                 function GetUnitCost(CorpNum : String): Single;
                 function checkCorpNum(CorpNum : String; UserCorpNum : String; UserID : String) : TCorpState;
                 function checkCorpNums(CorpNumList : Array Of String; UserCorpNum : String; UserID : String) : TCorpStateList;
+                function GetChargeInfo(CorpNum : String) : TClosedownChargeInfo;
         end;
 
 implementation
@@ -55,6 +63,25 @@ begin
         responseJson := httpget('/CloseDown/UnitCost',CorpNum,'');
 
         result := strToFloat(getJSonString( responseJson,'unitCost'));
+end;
+
+
+function TClosedownService.GetChargeInfo (CorpNum : string) : TClosedownChargeInfo;
+var
+        responseJson : String;
+begin
+        responseJson := httpget('/CloseDown/ChargeInfo',CorpNum,'');
+
+        try
+                result := TClosedownChargeInfo.Create;
+
+                result.unitCost := getJSonString(responseJson, 'unitCost');
+                result.chargeMethod := getJSonString(responseJson, 'chargeMethod');
+                result.rateSystem := getJSonString(responseJson, 'rateSystem');
+
+        except on E:Exception do
+                raise EPopbillException.Create(-99999999,'결과처리 실패.[Malformed Json]');
+        end;
 end;
 
 
