@@ -6,7 +6,7 @@
 *
 * http://www.popbill.com
 * Author : Jeong Yohan (yhjeong@linkhub.co.kr)
-* Written : 2015-07-01
+* Written : 2017-02-23
 * Thanks for your interest.
 *=================================================================================
 *)
@@ -43,8 +43,8 @@ type
         public
                 constructor Create(LinkID : String; SecretKey : String);
                 function GetUnitCost(CorpNum : String): Single;
-                function checkCorpNum(CorpNum : String; UserCorpNum : String; UserID : String) : TCorpState;
-                function checkCorpNums(CorpNumList : Array Of String; UserCorpNum : String; UserID : String) : TCorpStateList;
+                function checkCorpNum(CorpNum : String; UserCorpNum : String; UserID : String = '') : TCorpState;
+                function checkCorpNums(CorpNumList : Array Of String; UserCorpNum : String; UserID : String = '') : TCorpStateList;
                 function GetChargeInfo(CorpNum : String) : TClosedownChargeInfo;
         end;
 
@@ -86,7 +86,7 @@ end;
 
 
 
-function TClosedownService.checkCorpNum(CorpNum : String; UserCorpNum : String; UserID : String) : TCorpState;
+function TClosedownService.checkCorpNum(CorpNum : String; UserCorpNum : String; UserID : String = '') : TCorpState;
 var
         responseJson : string;
         url : string;
@@ -105,7 +105,7 @@ begin
 end;
 
 
-function TClosedownService.checkCorpNums(CorpNumList : Array Of String; UserCorpNum : String; UserID : String) : TCorpStateList;
+function TClosedownService.checkCorpNums(CorpNumList : Array Of String; UserCorpNum : String; UserID : String = '') : TCorpStateList;
 var
         requestJson : string;
         responseJson : string;
