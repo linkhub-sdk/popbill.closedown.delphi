@@ -6,7 +6,7 @@
 *
 * http://www.popbill.com
 * Author : Jeong Yohan (yhjeong@linkhub.co.kr)
-* Written : 2017-02-23
+* Written : 2017-08-18
 * Thanks for your interest.
 *=================================================================================
 *)
@@ -32,6 +32,7 @@ type
                 state : string;
                 stateDate : string;
                 checkDate : string;
+                typeDate : string;
         end;
 
         TCorpStateList = Array Of TCorpState;
@@ -173,6 +174,11 @@ begin
         begin
               result.checkDate := getJsonString(json, 'checkDate');
         end;
+
+        if Length(getJsonString(json, 'typeDate')) > 0 then
+        begin
+              result.typeDate := getJsonString(json, 'typeDate');
+        end;        
 end;
 
 
