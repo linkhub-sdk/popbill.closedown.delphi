@@ -7,6 +7,7 @@
 * http://www.popbill.com
 * Author : Jeong Yohan (yhjeong@linkhub.co.kr)
 * Written : 2017-08-18
+* Updated : 2019-03-22
 * Thanks for your interest.
 *=================================================================================
 *)
@@ -61,27 +62,84 @@ function TClosedownService.GetUnitCost(CorpNum : String) : Single;
 var
         responseJson : string;
 begin
-        responseJson := httpget('/CloseDown/UnitCost',CorpNum,'');
+        try
+                responseJson := httpget('/CloseDown/UnitCost',CorpNum,'');
+        except
+                on le : EPopbillException do begin
+                        if FIsThrowException then
+                        begin
+                                raise EPopbillException.Create(le.code, le.message);
+                                exit;
+                        end
+                        else
+                        begin
+                                result := 0.0;
+                                exit;
+                        end;
+                end;
+        end;
 
-        result := strToFloat(getJSonString( responseJson,'unitCost'));
+        if LastErrCode <> 0 then
+        begin
+                exit;
+        end
+        else
+        begin
+                result := strToFloat(getJSonString( responseJson,'unitCost'));
+        end;
 end;
 
 
-function TClosedownService.GetChargeInfo (CorpNum : string) : TClosedownChargeInfo;
+function TClosedownService.GetChargeInfo(CorpNum : string) : TClosedownChargeInfo;
 var
         responseJson : String;
 begin
-        responseJson := httpget('/CloseDown/ChargeInfo',CorpNum,'');
-
         try
-                result := TClosedownChargeInfo.Create;
+                responseJson := httpget('/CloseDown/ChargeInfo',CorpNum,'');
+        except
+                on le : EPopbillException do begin
+                        if FIsThrowException then
+                        begin
+                                raise EPopbillException.Create(le.code,le.message);
+                                exit;
+                        end
+                        else
+                        begin
+                                result := TClosedownChargeInfo.Create;
+                                setLastErrCode(le.code);
+                                setLastErrMessage(le.message);
+                                exit;
+                        end;
+                end;
+        end;
 
-                result.unitCost := getJSonString(responseJson, 'unitCost');
-                result.chargeMethod := getJSonString(responseJson, 'chargeMethod');
-                result.rateSystem := getJSonString(responseJson, 'rateSystem');
-
-        except on E:Exception do
-                raise EPopbillException.Create(-99999999,'결과처리 실패.[Malformed Json]');
+        if LastErrCode <> 0 then
+        begin
+                exit;
+        end
+        else
+        begin
+                try
+                        result := TClosedownChargeInfo.Create;
+                        result.unitCost := getJSonString(responseJson, 'unitCost');
+                        result.chargeMethod := getJSonString(responseJson, 'chargeMethod');
+                        result.rateSystem := getJSonString(responseJson, 'rateSystem');
+                except
+                        on E:Exception do begin
+                                if FIsThrowException then
+                                begin
+                                        raise EPopbillException.Create(-99999999,'결과처리 실패.[Malformed Json]');
+                                        exit;
+                                end
+                                else
+                                begin
+                                        result := TClosedownChargeInfo.Create;
+                                        setLastErrCode(-99999999);
+                                        setLastErrMessage('결과처리 실패.[Malformed Json]');
+                                        exit;
+                                end;
+                        end;
+                end;
         end;
 end;
 
@@ -94,15 +152,48 @@ var
 begin
         if Length(corpNum) = 0 then
         begin
-                raise EPopbillException.Create(-99999999, '사업자번호가 입력되지 않았습니다');
-                Exit;
+                if FIsThrowException then
+                begin
+                        raise EPopbillException.Create(-99999999, '조회할 사업자번호가 입력되지 않았습니다');
+                        Exit;
+                end
+                else
+                begin
+                        result := TCorpState.Create;
+                        setLastErrCode(-99999999);
+                        setLastErrMessage('조회할 사업자번호가 입력되지 않았습니다');
+                        exit;
+                end;
         end;
 
         url := '/CloseDown?CN='+ CorpNum;
 
-        responseJson := httpget(url, UserCorpNum, UserID);
+        try
+                responseJson := httpget(url, UserCorpNum, UserID);
 
-        result := jsonToTCorpState(responseJson);
+        except
+                on le : EPopbillException do begin
+                        if FIsThrowException then
+                        begin
+                                raise EPopbillException.Create(le.code,le.message);
+                                exit;
+                        end
+                        else
+                        begin
+                                result := TCorpState.Create;
+                                exit;
+                        end;
+                end;
+        end;
+
+        if LastErrCode <> 0 then
+        begin
+                exit;
+        end
+        else
+        begin
+                result := jsonToTCorpState(responseJson);
+        end;        
 end;
 
 
@@ -115,8 +206,18 @@ var
 begin
         if Length(CorpNumList) = 0 then
         begin
-                raise EPopbillException.Create(-99999999, '사업자번호가 입력되지 않았습니다');
-                Exit;
+                if FIsThrowException then
+                begin
+                        raise EPopbillException.Create(-99999999, '사업자번호가 입력되지 않았습니다');
+                        Exit;
+                end
+                else
+                begin
+                        SetLength(result,0);
+                        setLastErrCode(-99999999);
+                        setLastErrMessage('사업자번호가 입력되지 않았습니다');
+                        exit;
+                end;
         end;
 
         requestJson := '[';
@@ -128,20 +229,51 @@ begin
 
         requestJson := requestJson +']';
 
-        responseJson := httppost('/CloseDown', UserCorpNum, UserID, requestJson);
-
         try
-                jSons := ParseJsonList(responseJson);
-                SetLength(result,Length(jSons));
-
-                for i := 0 to Length(jSons)-1 do
-                begin
-                        result[i] := jsonToTCorpState(jSons[i]);
+                responseJson := httppost('/CloseDown', UserCorpNum, UserID, requestJson);
+        except
+                on le : EPopbillException do begin
+                        if FIsThrowException then
+                        begin
+                                raise EPopbillException.Create(le.code, le.message);
+                                exit;
+                        end;
                 end;
-
-        except on E:Exception do
-                raise EPopbillException.Create(-99999999, '결과처리 실패.[Malformed Json]');
         end;
+
+        if LastErrCode <> 0 then
+        begin
+                exit;
+        end
+        else
+        begin
+                try
+                        jSons := ParseJsonList(responseJson);
+                        SetLength(result,Length(jSons));
+
+                        for i := 0 to Length(jSons)-1 do
+                        begin
+                                result[i] := jsonToTCorpState(jSons[i]);
+                        end;
+
+                except
+                        on E:Exception do begin
+                                if FIsThrowException then
+                                begin
+
+                                        raise EPopbillException.Create(-99999999, '결과처리 실패.[Malformed Json]');
+                                end
+                                else
+                                begin
+                                        SetLength(result,0);
+                                        setLastErrCode(-99999999);
+                                        setLastErrMessage('결과처리 실패.[Malformed Json]');
+                                        exit;
+                                end;
+                        end;
+                end;
+        end;
+
 
 
 end;
