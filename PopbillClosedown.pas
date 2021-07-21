@@ -7,7 +7,7 @@
 * http://www.popbill.com
 * Author : Jeong Yohan (yhjeong@linkhub.co.kr)
 * Written : 2017-08-18
-* Updated : 2019-05-03
+* Updated : 2021-07-21
 * Thanks for your interest.
 *=================================================================================
 *)
@@ -30,6 +30,7 @@ type
         public
                 corpNum : string;
                 ctype : string;
+                taxType : string;                
                 state : string;
                 stateDate : string;
                 checkDate : string;
@@ -290,6 +291,10 @@ begin
         if Length(getJsonString(json, 'type')) > 0  then
         begin
                 result.ctype := getJsonString(json, 'type');
+        end;
+        if Length(getJsonString(json, 'taxType')) > 0  then
+        begin
+                result.taxType := getJsonString(json, 'taxType');
         end;
 
         if Length(getJsonString(json, 'state')) > 0 then
